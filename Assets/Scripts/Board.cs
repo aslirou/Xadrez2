@@ -10,6 +10,11 @@ public class Board : MonoBehaviour
     [SerializeField] private float tileSize = 1.0f;
     [SerializeField] private float yOffset = 0.15f;
     [SerializeField] private Vector3 boardCenter = Vector3.zero;
+
+    [Header("Prefabs & Materials")]
+    [SerializeField] private GameObject[] prefabs;
+    [SerializeField] private Material[] teamMaterials;
+
     // LOGIC
     private const int TILE_COUNT_X = 8;
     private const int TILE_COUNT_Y = 8;
