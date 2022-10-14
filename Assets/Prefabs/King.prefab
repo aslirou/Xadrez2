@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7560072943874129676}
   - component: {fileID: 2477069128663707232}
   - component: {fileID: 2625717218191794360}
+  - component: {fileID: 7646583203409387014}
   m_Layer: 0
   m_Name: King
   m_TagString: Untagged
@@ -97,3 +98,15 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &7646583203409387014
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8977391914709242113}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d54e826448aead4e855b3b11271dd2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
