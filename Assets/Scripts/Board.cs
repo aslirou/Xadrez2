@@ -29,6 +29,7 @@ public class Board : MonoBehaviour
         GenerateTiles(tileSize, TILE_COUNT_X, TILE_COUNT_Y);
 
         SpawnAllPieces();
+        PositionAllPieces();
     }
 
     // Start is called before the first frame update
@@ -153,6 +154,29 @@ public class Board : MonoBehaviour
             boardPieces[6, i] = SpawnSinglePiece(PieceType.Pawn, blacks);
         }
 
+    }
+
+    // Positioning
+
+    private void PositionAllPieces()
+    {
+        for(int x = 0; x < TILE_COUNT_X; ++x)
+        {
+            for (int y = 0; y < TILE_COUNT_Y; ++y)
+            {
+                if (boardPieces[x, y] != null)
+                {
+                    PositionSinglePiece(x, y, true);
+                }
+            }
+        }
+    }
+
+    private void PositionSinglePiece(int x, int y, bool force = false)
+    {
+        boardPieces[x, y].currX = x;
+        boardPieces[x, y].currY = y;
+        boardPieces[x, y].transform.position = new Vector3(x * tileSize, yOffset, y * tileSize) - bounds;
     }
 
     private Piece SpawnSinglePiece(PieceType type, int team)
