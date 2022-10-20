@@ -176,7 +176,12 @@ public class Board : MonoBehaviour
     {
         boardPieces[x, y].currX = x;
         boardPieces[x, y].currY = y;
-        boardPieces[x, y].transform.position = new Vector3(x * tileSize, yOffset, y * tileSize) - bounds;
+        boardPieces[x, y].transform.position = GetTileCenter(x, y);
+    }
+
+    private Vector3 GetTileCenter(int x, int y)
+    {
+        return new Vector3(x * tileSize, yOffset, y * tileSize) - bounds +  new Vector3(tileSize/2, 0, tileSize/2);
     }
 
     private Piece SpawnSinglePiece(PieceType type, int team)
