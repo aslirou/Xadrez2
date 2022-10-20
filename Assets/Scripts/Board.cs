@@ -10,6 +10,8 @@ public class Board : MonoBehaviour
     [SerializeField] private float tileSize = 1.0f;
     [SerializeField] private float yOffset = 0.15f;
     [SerializeField] private Vector3 boardCenter = Vector3.zero;
+    [SerializeField] private float deathSize = 0.3f;
+    [SerializeField] private float deathSpacing = 0.3f;
 
     [Header("Prefabs & Materials")]
     [SerializeField] private GameObject[] prefabs;
@@ -17,6 +19,9 @@ public class Board : MonoBehaviour
 
     // LOGIC
     private Piece[,] boardPieces;
+    private Piece currentlyDragging;
+    private List<Piece> deadWhites = new List<Piece>();
+    private List<Piece> deadBlacks = new List<Piece>();
     private const int TILE_COUNT_X = 8;
     private const int TILE_COUNT_Y = 8;
     private GameObject[,] tiles;
@@ -68,6 +73,37 @@ public class Board : MonoBehaviour
                 currentHover = hitPosition;
                 tiles[hitPosition.x, hitPosition.y].layer = LayerMask.NameToLayer("Hover");
             }
+
+            // If we press down on the mouse
+            if (Input.GetMouseButtonDown(0))
+            {
+                if (Piece[hitPosition.x, hitPosition.y] != null)
+                {
+                    // Is it our turn
+                    if (true)
+                    {
+                        currentlyDragging = Piece[hitPosition.x,hitPosition.y];
+                    }
+                };
+            }
+            
+            // If we are releasing the mouse button
+            if (currentlyDragging != null && Input.GetMouseButtonDown(0))
+            {
+                Vector2Int previousPosition = new Vector2Int(currentlyDragging.currentX, currentlyDragging.currentY);
+
+                bool validMove = MoveTo(currentlyDragging, hitPosition.x, hitPosition.y);
+                if (!validMove)
+                {
+                    currentlyDragging.SetPosition(GetTileCenter(previousPosition.x, previousPosition.y));
+                    currentlyDragging = null;
+                }
+                else
+                {
+                    currentlyDragging = null;
+                }
+            }
+
             else
             {
                 if (currentHover != -Vector2Int.one)
@@ -75,9 +111,15 @@ public class Board : MonoBehaviour
                     tiles[currentHover.x, currentHover.y].layer = LayerMask.NameToLayer("Tile");
                     currentHover = -Vector2Int.one;
                 }
+                if(currentlyDragging && Input.GetMouseButtonUp(0))
+                {
+                    currentlyDragging.SetPosition(GetTileCenter(currentlyDragging.currentX, currentlyDragging.currentY));
+                    currentlyDragging = null;
+                }
             }
         }
     }
+
     private void GenerateTiles(float tileSize, int tileCountX, int tileCountY)
     {
         yOffset += transform.position.y;
@@ -121,6 +163,52 @@ public class Board : MonoBehaviour
         return tileObject;
     }
 
+
+    //Operations
+    private bool MoveTo(Piece piece, int x , int y)
+    {
+        Vector2Int previousPosition = new Vector2Int(piece.currentX, piece.currentY);
+
+        if (boardPieces[x,y] != null)
+        {
+            Piece cp = boardPieces[x, y];
+
+            if (piece.team == cp.team)
+            {
+
+                return false;
+            }
+
+            if(cp.team == 0)
+            {
+                deadWhites.Add(cp);
+                cp.SetScale(Vector3.one * deathSize);
+                cp.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize)
+                    -bounds
+                    +new Vector3(tileSize/ 2, 0 , tileSize/2) 
+                    + (Vector3.foward * deathSpacing)* deadWhites.Count);
+
+            }
+            else
+            {
+                deadBlacks.Add(cp);
+                cp.SetScale(Vector3.one * deathSize);
+                cp.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize)
+                    - bounds
+                    + new Vector3(tileSize / 2, 0, tileSize / 2)
+                    + (Vector3.foward * deathSpacing) * deadBlacks.Count);
+            }
+        }
+
+        Piece[x, y] = piece;
+        Piece[previousPosition.x, previousPosition.y] = null;
+
+        PositionSinglePiece(x, y);
+
+        return true;
+    }
+
+
     private void SpawnAllPieces()
     {
         boardPieces = new Piece[TILE_COUNT_X, TILE_COUNT_Y];
@@ -131,7 +219,7 @@ public class Board : MonoBehaviour
         // white team
         boardPieces[0, 0] = SpawnSinglePiece(PieceType.Rook, whites);
         boardPieces[0, 1] = SpawnSinglePiece(PieceType.Knight, whites);
-        boardPieces[0, 2] = SpawnSinglePiece(PieceType.Bishop, whites);
+        boardPieces[0, 2] = SpawnSinglePiece(PieceType.Bish, whites);
         boardPieces[0, 3] = SpawnSinglePiece(PieceType.Queen, whites);
         boardPieces[0, 4] = SpawnSinglePiece(PieceType.King, whites);
         boardPieces[0, 5] = SpawnSinglePiece(PieceType.Bishop, whites);
@@ -176,7 +264,7 @@ public class Board : MonoBehaviour
     {
         boardPieces[x, y].currX = x;
         boardPieces[x, y].currY = y;
-        boardPieces[x, y].transform.position = GetTileCenter(x, y);
+        boardPieces[x, y].SetPosition(GetTileCenter(x, y),force);
     }
 
     private Vector3 GetTileCenter(int x, int y)
