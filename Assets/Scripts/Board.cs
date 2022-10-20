@@ -16,6 +16,7 @@ public class Board : MonoBehaviour
     [SerializeField] private Material[] teamMaterials;
 
     // LOGIC
+    private Piece[,] boardPieces;
     private const int TILE_COUNT_X = 8;
     private const int TILE_COUNT_Y = 8;
     private GameObject[,] tiles;
@@ -26,6 +27,8 @@ public class Board : MonoBehaviour
     private void Awake()
     {
         GenerateTiles(tileSize, TILE_COUNT_X, TILE_COUNT_Y);
+
+        SpawnAllPieces();
     }
 
     // Start is called before the first frame update
@@ -117,6 +120,51 @@ public class Board : MonoBehaviour
         return tileObject;
     }
 
+    private void SpawnAllPieces()
+    {
+        boardPieces = new Piece[TILE_COUNT_X, TILE_COUNT_Y];
+
+        int whites = 0;
+        int blacks = 1;
+
+        // white team
+        boardPieces[0, 0] = SpawnSinglePiece(PieceType.Rook, whites);
+        boardPieces[0, 1] = SpawnSinglePiece(PieceType.Knight, whites);
+        boardPieces[0, 2] = SpawnSinglePiece(PieceType.Bishop, whites);
+        boardPieces[0, 3] = SpawnSinglePiece(PieceType.Queen, whites);
+        boardPieces[0, 4] = SpawnSinglePiece(PieceType.King, whites);
+        boardPieces[0, 5] = SpawnSinglePiece(PieceType.Bishop, whites);
+        boardPieces[0, 6] = SpawnSinglePiece(PieceType.Knight, whites);
+        boardPieces[0, 7] = SpawnSinglePiece(PieceType.Rook, whites);
+
+        // black team
+        boardPieces[7, 0] = SpawnSinglePiece(PieceType.Rook, blacks);
+        boardPieces[7, 1] = SpawnSinglePiece(PieceType.Knight, blacks);
+        boardPieces[7, 2] = SpawnSinglePiece(PieceType.Bishop, blacks);
+        boardPieces[7, 3] = SpawnSinglePiece(PieceType.King, blacks);
+        boardPieces[7, 4] = SpawnSinglePiece(PieceType.Queen, blacks);
+        boardPieces[7, 5] = SpawnSinglePiece(PieceType.Bishop, blacks);
+        boardPieces[7, 6] = SpawnSinglePiece(PieceType.Knight, blacks);
+        boardPieces[7, 7] = SpawnSinglePiece(PieceType.Rook, blacks);
+
+        for(int i = 0; i < TILE_COUNT_X; ++i)
+        {
+            boardPieces[1, i] = SpawnSinglePiece(PieceType.Pawn, whites);
+            boardPieces[6, i] = SpawnSinglePiece(PieceType.Pawn, blacks);
+        }
+
+    }
+
+    private Piece SpawnSinglePiece(PieceType type, int team)
+    {
+        Piece p = Instantiate(prefabs[(int)type - 1], transform).GetComponent<Piece>();
+        
+        p.type = type;
+        p.team = team;
+        // p.GetComponent<MeshRenderer>().material = teamMaterials[team];
+
+        return p;
+    }
     private Vector2Int LookupTileIndex(GameObject hitInfo)
     {
         for (int x = 0; x < TILE_COUNT_X; ++x)
