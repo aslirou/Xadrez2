@@ -25,8 +25,20 @@ public class Piece : MonoBehaviour
 
     private void Update()
     {
-        transform.position = Vector3.Lerp(transform.osition, newPosition,Time.deltaTime * 10);
-        transform.LocalScale = Vector3.Lerp(transform.localScale, newScale, Time.deltaTime * 10); )
+        transform.position = Vector3.Lerp(transform.position, newPosition,Time.deltaTime * 10);
+        transform.localScale = Vector3.Lerp(transform.localScale, newScale, Time.deltaTime * 10); 
+    }
+
+    public virtual List<Vector2Int> GetAvailableMoves(ref Piece[,] board, int tileCountX, int tileCountY)
+    {
+        List<Vector2Int> r = new List<Vector2Int>();
+        r.Add(new Vector2Int(3, 3));
+        r.Add(new Vector2Int(3, 4));
+        r.Add(new Vector2Int(4, 3));
+        r.Add(new Vector2Int(4, 4));
+
+        return r;
+
     }
 
     public virtual void SetPosition(Vector3 position, bool force = false)
@@ -38,7 +50,7 @@ public class Piece : MonoBehaviour
 
     public virtual void SetScale(Vector3 position, bool force = false)
     {
-        newScale = scale;
+        newScale = position;
         if (force)
             transform.localScale = newScale;
     }

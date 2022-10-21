@@ -20,6 +20,7 @@ public class Board : MonoBehaviour
     // LOGIC
     private Piece[,] boardPieces;
     private Piece currentlyDragging;
+    private List<Vector2Int> availableMoves = new List<Vector2Int>();
     private List<Piece> deadWhites = new List<Piece>();
     private List<Piece> deadBlacks = new List<Piece>();
     private const int TILE_COUNT_X = 8;
@@ -54,7 +55,7 @@ public class Board : MonoBehaviour
 
         RaycastHit info;
         Ray ray = currentCamera.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out info, 100, LayerMask.GetMask("Tile", "Hover")))
+        if (Physics.Raycast(ray, out info, 100, LayerMask.GetMask("Tile", "Hover", "Highlight")))
         {
             // Get the indexes of the tile i've hit
             Vector2Int hitPosition = LookupTileIndex(info.transform.gameObject);
@@ -69,7 +70,7 @@ public class Board : MonoBehaviour
             // If we were already hovering a tile, change the previous one
             if (currentHover != hitPosition)
             {
-                tiles[currentHover.x, currentHover.y].layer = LayerMask.NameToLayer("Tile");
+                tiles[currentHover.x, currentHover.y].layer = (ContainsValidMove(ref availableMoves, currentHover)) ? LayerMask.NameToLayer("Highlight") : LayerMask.NameToLayer("Tile");
                 currentHover = hitPosition;
                 tiles[hitPosition.x, hitPosition.y].layer = LayerMask.NameToLayer("Hover");
             }
@@ -77,12 +78,16 @@ public class Board : MonoBehaviour
             // If we press down on the mouse
             if (Input.GetMouseButtonDown(0))
             {
-                if (Piece[hitPosition.x, hitPosition.y] != null)
+                if (boardPieces[hitPosition.x, hitPosition.y] != null)
                 {
                     // Is it our turn
                     if (true)
                     {
-                        currentlyDragging = Piece[hitPosition.x,hitPosition.y];
+                        currentlyDragging = boardPieces[hitPosition.x,hitPosition.y];
+
+                        // Get a list of where i can go, highlight tiles as well
+                        availableMoves = currentlyDragging.GetAvailableMoves(ref boardPieces, TILE_COUNT_X, TILE_COUNT_Y);
+                        HighLightTiles();
                     }
                 };
             }
@@ -90,7 +95,7 @@ public class Board : MonoBehaviour
             // If we are releasing the mouse button
             if (currentlyDragging != null && Input.GetMouseButtonDown(0))
             {
-                Vector2Int previousPosition = new Vector2Int(currentlyDragging.currentX, currentlyDragging.currentY);
+                Vector2Int previousPosition = new Vector2Int(currentlyDragging.currX, currentlyDragging.currY);
 
                 bool validMove = MoveTo(currentlyDragging, hitPosition.x, hitPosition.y);
                 if (!validMove)
@@ -98,23 +103,23 @@ public class Board : MonoBehaviour
                     currentlyDragging.SetPosition(GetTileCenter(previousPosition.x, previousPosition.y));
                     currentlyDragging = null;
                 }
-                else
-                {
-                    currentlyDragging = null;
-                }
+                currentlyDragging = null;
+                RemoveHighLightTiles();
+                
             }
 
             else
             {
                 if (currentHover != -Vector2Int.one)
                 {
-                    tiles[currentHover.x, currentHover.y].layer = LayerMask.NameToLayer("Tile");
+                    tiles[currentHover.x, currentHover.y].layer = (ContainsValidMove(ref availableMoves, currentHover)) ? LayerMask.NameToLayer("Highlight") : LayerMask.NameToLayer("Tile");
                     currentHover = -Vector2Int.one;
                 }
                 if(currentlyDragging && Input.GetMouseButtonUp(0))
                 {
-                    currentlyDragging.SetPosition(GetTileCenter(currentlyDragging.currentX, currentlyDragging.currentY));
+                    currentlyDragging.SetPosition(GetTileCenter(currentlyDragging.currX, currentlyDragging.currY));
                     currentlyDragging = null;
+                    RemoveHighLightTiles();
                 }
             }
         }
@@ -165,9 +170,23 @@ public class Board : MonoBehaviour
 
 
     //Operations
+    private bool ContainsValidMove(ref List<Vector2Int> moves, Vector2 pos)
+    {
+        for (int i = 0; i < moves.Count; i++)
+        {
+            if(moves[i].x == pos.x && moves[i].y == pos.y)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
     private bool MoveTo(Piece piece, int x , int y)
     {
-        Vector2Int previousPosition = new Vector2Int(piece.currentX, piece.currentY);
+        if (!ContainsValidMove(ref availableMoves, new Vector2(x, y)))
+            return false;
+
+        Vector2Int previousPosition = new Vector2Int(piece.currX, piece.currY);
 
         if (boardPieces[x,y] != null)
         {
@@ -186,7 +205,7 @@ public class Board : MonoBehaviour
                 cp.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize)
                     -bounds
                     +new Vector3(tileSize/ 2, 0 , tileSize/2) 
-                    + (Vector3.foward * deathSpacing)* deadWhites.Count);
+                    + (Vector3.forward * deathSpacing)* deadWhites.Count);
 
             }
             else
@@ -196,12 +215,12 @@ public class Board : MonoBehaviour
                 cp.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize)
                     - bounds
                     + new Vector3(tileSize / 2, 0, tileSize / 2)
-                    + (Vector3.foward * deathSpacing) * deadBlacks.Count);
+                    + (Vector3.forward * deathSpacing) * deadBlacks.Count);
             }
         }
 
-        Piece[x, y] = piece;
-        Piece[previousPosition.x, previousPosition.y] = null;
+        boardPieces[x, y] = piece;
+        boardPieces[previousPosition.x, previousPosition.y] = null;
 
         PositionSinglePiece(x, y);
 
@@ -219,7 +238,7 @@ public class Board : MonoBehaviour
         // white team
         boardPieces[0, 0] = SpawnSinglePiece(PieceType.Rook, whites);
         boardPieces[0, 1] = SpawnSinglePiece(PieceType.Knight, whites);
-        boardPieces[0, 2] = SpawnSinglePiece(PieceType.Bish, whites);
+        boardPieces[0, 2] = SpawnSinglePiece(PieceType.Bishop, whites);
         boardPieces[0, 3] = SpawnSinglePiece(PieceType.Queen, whites);
         boardPieces[0, 4] = SpawnSinglePiece(PieceType.King, whites);
         boardPieces[0, 5] = SpawnSinglePiece(PieceType.Bishop, whites);
@@ -296,6 +315,24 @@ public class Board : MonoBehaviour
         }
 
         return -Vector2Int.one;
+    }
+
+    //Highlight Tiles
+    private void HighLightTiles()
+    {
+        for(int i = 0; i < availableMoves.Count; i++)
+        {
+            tiles[availableMoves[i].x, availableMoves[i].y].layer = LayerMask.NameToLayer("Highlight");
+        }
+    }
+
+    private void RemoveHighLightTiles()
+    {
+        for (int i = 0; i < availableMoves.Count; i++)
+        {
+            tiles[availableMoves[i].x, availableMoves[i].y].layer = LayerMask.NameToLayer("Tile");
+        }
+        availableMoves.Clear();
     }
 
 
