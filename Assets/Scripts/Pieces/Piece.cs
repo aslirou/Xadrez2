@@ -25,21 +25,23 @@ public class Piece : MonoBehaviour
 
     private void Update()
     {
-        transform.position = Vector3.Lerp(transform.osition, newPosition,Time.deltaTime * 10);
-        transform.LocalScale = Vector3.Lerp(transform.localScale, newScale, Time.deltaTime * 10); )
+        transform.position = Vector3.Lerp(transform.position, newPosition,Time.deltaTime * 10);
+        transform.localScale = Vector3.Lerp(transform.localScale, newScale, Time.deltaTime * 10); 
     }
 
     public virtual void SetPosition(Vector3 position, bool force = false)
     {
         newPosition = position;
-        if (force)
+        if (force){
             transform.position = newPosition;
+        }
     }
 
     public virtual void SetScale(Vector3 position, bool force = false)
     {
-        newScale = scale;
-        if (force)
+        newScale = position;
+        if (force){
             transform.localScale = newScale;
+        }
     }
 }

@@ -77,12 +77,12 @@ public class Board : MonoBehaviour
             // If we press down on the mouse
             if (Input.GetMouseButtonDown(0))
             {
-                if (Piece[hitPosition.x, hitPosition.y] != null)
+                if (boardPieces[hitPosition.x, hitPosition.y] != null)
                 {
                     // Is it our turn
                     if (true)
                     {
-                        currentlyDragging = Piece[hitPosition.x,hitPosition.y];
+                        currentlyDragging = boardPieces[hitPosition.x,hitPosition.y];
                     }
                 };
             }
@@ -90,7 +90,7 @@ public class Board : MonoBehaviour
             // If we are releasing the mouse button
             if (currentlyDragging != null && Input.GetMouseButtonDown(0))
             {
-                Vector2Int previousPosition = new Vector2Int(currentlyDragging.currentX, currentlyDragging.currentY);
+                Vector2Int previousPosition = new Vector2Int(currentlyDragging.currX, currentlyDragging.currY);
 
                 bool validMove = MoveTo(currentlyDragging, hitPosition.x, hitPosition.y);
                 if (!validMove)
@@ -113,7 +113,7 @@ public class Board : MonoBehaviour
                 }
                 if(currentlyDragging && Input.GetMouseButtonUp(0))
                 {
-                    currentlyDragging.SetPosition(GetTileCenter(currentlyDragging.currentX, currentlyDragging.currentY));
+                    currentlyDragging.SetPosition(GetTileCenter(currentlyDragging.currX, currentlyDragging.currY));
                     currentlyDragging = null;
                 }
             }
@@ -167,7 +167,7 @@ public class Board : MonoBehaviour
     //Operations
     private bool MoveTo(Piece piece, int x , int y)
     {
-        Vector2Int previousPosition = new Vector2Int(piece.currentX, piece.currentY);
+        Vector2Int previousPosition = new Vector2Int(piece.currX, piece.currY);
 
         if (boardPieces[x,y] != null)
         {
@@ -186,22 +186,22 @@ public class Board : MonoBehaviour
                 cp.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize)
                     -bounds
                     +new Vector3(tileSize/ 2, 0 , tileSize/2) 
-                    + (Vector3.foward * deathSpacing)* deadWhites.Count);
+                    + (Vector3.forward * deathSpacing)* deadWhites.Count);
 
             }
             else
             {
                 deadBlacks.Add(cp);
                 cp.SetScale(Vector3.one * deathSize);
-                cp.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize)
+                cp.SetPosition(new Vector3(-1 * tileSize, yOffset, 8 * tileSize)
                     - bounds
                     + new Vector3(tileSize / 2, 0, tileSize / 2)
-                    + (Vector3.foward * deathSpacing) * deadBlacks.Count);
+                    + (Vector3.back * deathSpacing) * deadBlacks.Count);
             }
         }
 
-        Piece[x, y] = piece;
-        Piece[previousPosition.x, previousPosition.y] = null;
+        boardPieces[x, y] = piece;
+        boardPieces[previousPosition.x, previousPosition.y] = null;
 
         PositionSinglePiece(x, y);
 
@@ -219,7 +219,7 @@ public class Board : MonoBehaviour
         // white team
         boardPieces[0, 0] = SpawnSinglePiece(PieceType.Rook, whites);
         boardPieces[0, 1] = SpawnSinglePiece(PieceType.Knight, whites);
-        boardPieces[0, 2] = SpawnSinglePiece(PieceType.Bish, whites);
+        boardPieces[0, 2] = SpawnSinglePiece(PieceType.Bishop, whites);
         boardPieces[0, 3] = SpawnSinglePiece(PieceType.Queen, whites);
         boardPieces[0, 4] = SpawnSinglePiece(PieceType.King, whites);
         boardPieces[0, 5] = SpawnSinglePiece(PieceType.Bishop, whites);
