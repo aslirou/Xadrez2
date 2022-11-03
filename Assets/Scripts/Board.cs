@@ -10,7 +10,18 @@ public class Board : MonoBehaviour
     [SerializeField] private float tileSize = 1.0f;
     [SerializeField] private float yOffset = 0.15f;
     [SerializeField] private Vector3 boardCenter = Vector3.zero;
+    [SerializeField] private float deathSize = 0.3f;
+    [SerializeField] private float deathSpacing = 0.3f;
+
+    [Header("Prefabs & Materials")]
+    [SerializeField] private GameObject[] prefabs;
+    [SerializeField] private Material[] teamMaterials;
+
     // LOGIC
+    private Piece[,] boardPieces;
+    private Piece currentlyDragging;
+    private List<Piece> deadWhites = new List<Piece>();
+    private List<Piece> deadBlacks = new List<Piece>();
     private const int TILE_COUNT_X = 8;
     private const int TILE_COUNT_Y = 8;
     private GameObject[,] tiles;
@@ -21,6 +32,9 @@ public class Board : MonoBehaviour
     private void Awake()
     {
         GenerateTiles(tileSize, TILE_COUNT_X, TILE_COUNT_Y);
+
+        SpawnAllPieces();
+        PositionAllPieces();
     }
 
     // Start is called before the first frame update
@@ -59,6 +73,37 @@ public class Board : MonoBehaviour
                 currentHover = hitPosition;
                 tiles[hitPosition.x, hitPosition.y].layer = LayerMask.NameToLayer("Hover");
             }
+
+            // If we press down on the mouse
+            if (Input.GetMouseButtonDown(0))
+            {
+                if (boardPieces[hitPosition.x, hitPosition.y] != null)
+                {
+                    // Is it our turn
+                    if (true)
+                    {
+                        currentlyDragging = boardPieces[hitPosition.x,hitPosition.y];
+                    }
+                };
+            }
+            
+            // If we are releasing the mouse button
+            if (currentlyDragging != null && Input.GetMouseButtonDown(0))
+            {
+                Vector2Int previousPosition = new Vector2Int(currentlyDragging.currX, currentlyDragging.currY);
+
+                bool validMove = MoveTo(currentlyDragging, hitPosition.x, hitPosition.y);
+                if (!validMove)
+                {
+                    currentlyDragging.SetPosition(GetTileCenter(previousPosition.x, previousPosition.y));
+                    currentlyDragging = null;
+                }
+                else
+                {
+                    currentlyDragging = null;
+                }
+            }
+
             else
             {
                 if (currentHover != -Vector2Int.one)
@@ -66,9 +111,15 @@ public class Board : MonoBehaviour
                     tiles[currentHover.x, currentHover.y].layer = LayerMask.NameToLayer("Tile");
                     currentHover = -Vector2Int.one;
                 }
+                if(currentlyDragging && Input.GetMouseButtonUp(0))
+                {
+                    currentlyDragging.SetPosition(GetTileCenter(currentlyDragging.currX, currentlyDragging.currY));
+                    currentlyDragging = null;
+                }
             }
         }
     }
+
     private void GenerateTiles(float tileSize, int tileCountX, int tileCountY)
     {
         yOffset += transform.position.y;
@@ -112,6 +163,125 @@ public class Board : MonoBehaviour
         return tileObject;
     }
 
+
+    //Operations
+    private bool MoveTo(Piece piece, int x , int y)
+    {
+        Vector2Int previousPosition = new Vector2Int(piece.currX, piece.currY);
+
+        if (boardPieces[x,y] != null)
+        {
+            Piece cp = boardPieces[x, y];
+
+            if (piece.team == cp.team)
+            {
+
+                return false;
+            }
+
+            if(cp.team == 0)
+            {
+                deadWhites.Add(cp);
+                cp.SetScale(Vector3.one * deathSize);
+                cp.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize)
+                    -bounds
+                    +new Vector3(tileSize/ 2, 0 , tileSize/2) 
+                    + (Vector3.forward * deathSpacing)* deadWhites.Count);
+
+            }
+            else
+            {
+                deadBlacks.Add(cp);
+                cp.SetScale(Vector3.one * deathSize);
+                cp.SetPosition(new Vector3(-1 * tileSize, yOffset, 8 * tileSize)
+                    - bounds
+                    + new Vector3(tileSize / 2, 0, tileSize / 2)
+                    + (Vector3.back * deathSpacing) * deadBlacks.Count);
+            }
+        }
+
+        boardPieces[x, y] = piece;
+        boardPieces[previousPosition.x, previousPosition.y] = null;
+
+        PositionSinglePiece(x, y);
+
+        return true;
+    }
+
+
+    private void SpawnAllPieces()
+    {
+        boardPieces = new Piece[TILE_COUNT_X, TILE_COUNT_Y];
+
+        int whites = 0;
+        int blacks = 1;
+
+        // white team
+        boardPieces[0, 0] = SpawnSinglePiece(PieceType.Rook, whites);
+        boardPieces[0, 1] = SpawnSinglePiece(PieceType.Knight, whites);
+        boardPieces[0, 2] = SpawnSinglePiece(PieceType.Bishop, whites);
+        boardPieces[0, 3] = SpawnSinglePiece(PieceType.Queen, whites);
+        boardPieces[0, 4] = SpawnSinglePiece(PieceType.King, whites);
+        boardPieces[0, 5] = SpawnSinglePiece(PieceType.Bishop, whites);
+        boardPieces[0, 6] = SpawnSinglePiece(PieceType.Knight, whites);
+        boardPieces[0, 7] = SpawnSinglePiece(PieceType.Rook, whites);
+
+        // black team
+        boardPieces[7, 0] = SpawnSinglePiece(PieceType.Rook, blacks);
+        boardPieces[7, 1] = SpawnSinglePiece(PieceType.Knight, blacks);
+        boardPieces[7, 2] = SpawnSinglePiece(PieceType.Bishop, blacks);
+        boardPieces[7, 3] = SpawnSinglePiece(PieceType.King, blacks);
+        boardPieces[7, 4] = SpawnSinglePiece(PieceType.Queen, blacks);
+        boardPieces[7, 5] = SpawnSinglePiece(PieceType.Bishop, blacks);
+        boardPieces[7, 6] = SpawnSinglePiece(PieceType.Knight, blacks);
+        boardPieces[7, 7] = SpawnSinglePiece(PieceType.Rook, blacks);
+
+        for(int i = 0; i < TILE_COUNT_X; ++i)
+        {
+            boardPieces[1, i] = SpawnSinglePiece(PieceType.Pawn, whites);
+            boardPieces[6, i] = SpawnSinglePiece(PieceType.Pawn, blacks);
+        }
+
+    }
+
+    // Positioning
+
+    private void PositionAllPieces()
+    {
+        for(int x = 0; x < TILE_COUNT_X; ++x)
+        {
+            for (int y = 0; y < TILE_COUNT_Y; ++y)
+            {
+                if (boardPieces[x, y] != null)
+                {
+                    PositionSinglePiece(x, y, true);
+                }
+            }
+        }
+    }
+
+    private void PositionSinglePiece(int x, int y, bool force = false)
+    {
+        boardPieces[x, y].currX = x;
+        boardPieces[x, y].currY = y;
+        boardPieces[x, y].SetPosition(GetTileCenter(x, y),force);
+    }
+
+    private Vector3 GetTileCenter(int x, int y)
+    {
+        return new Vector3(x * tileSize, yOffset, y * tileSize) - bounds +  new Vector3(tileSize/2, 0, tileSize/2);
+    }
+
+    private Piece SpawnSinglePiece(PieceType type, int team)
+    {
+        Piece p = Instantiate(prefabs[(int)type - 1], transform).GetComponent<Piece>();
+        
+        p.type = type;
+        p.team = team;
+        // p.GetComponent<MeshRenderer>().material = teamMaterials[team];
+
+        return p;
+    }
     private Vector2Int LookupTileIndex(GameObject hitInfo)
     {
         for (int x = 0; x < TILE_COUNT_X; ++x)
